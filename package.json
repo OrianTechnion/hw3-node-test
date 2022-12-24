@@ -1,0 +1,24 @@
+{
+  "name": "hw3-node-test",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.test.js",
+  "type": "module",
+  "jest": {
+    "testTimeout": 20000,
+    "bail": 1
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Orian Shechter",
+  "license": "ISC",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "supertest": "^6.3.3",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.3.1"
+  }
+}
