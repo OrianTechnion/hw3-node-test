@@ -240,7 +240,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
                 expect(response.status).toBe(400)
             }
 
-            const badPrices = ["5", -5, 1005, null, 50.5]
+            const badPrices = ["5", -5, 1005, null]
             for (const badPrice of badPrices) {
                 let productWithBadPrice = Object.assign({}, products[0], {price: badPrice})
                 const reqBody = JSON.stringify(productWithBadPrice);
@@ -387,6 +387,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             expect(response.status).toBe(400)
         })
 
+        // https://moodle2223.technion.ac.il/mod/forum/discuss.php?d=11954#p15516
         test('PUT /api/product - 400 - item not exist', async () => {
             const notExistingId = v4().substring(0,20);
             const reqBody = JSON.stringify(products[0]);
@@ -545,6 +546,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             expect(response.status).toBe(400);
 
         })
+
         test('PUT /api/permission - 200 - validate permissions with old token', async () => {
             let reqBody = JSON.stringify(products[0]);
             let response = await request(BASE_URL)
@@ -575,12 +577,6 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
                 .send()
             expect(response.status).toBe(403);
 
-            response = await request(BASE_URL)
-                .delete(`/api/product/${id}`)
-                .set('Authorization', `Bearer ${userJwt}`)
-                .send()
-            expect(response.status).toBe(403);
-
             reqBody = JSON.stringify({username, permission: 'W'});
             response = await request(BASE_URL)
                 .put('/api/permission')
@@ -594,6 +590,166 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
                 .set('Authorization', `Bearer ${userJwt}`)
                 .send(reqBody);
             expect(response.status).toBe(403);
+        })
+
+        test('Validate permission W', async () => {
+            let reqBody = 'bad_body';
+            let notExistedId = v4().substring(0,25);
+            let response = await request(BASE_URL)
+                .get(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send();
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .post(`/api/product`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send(reqBody);
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send(reqBody);
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send(reqBody);
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send();
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send();
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/permission`)
+                .set('Authorization', `Bearer ${userJwt}`)
+                .send(reqBody);
+            expect(response.status).toBe(403);
+        })
+
+        test('Validate permission M', async () => {
+            const MUsername = v4().substring(0,25);
+            const MPassword = '1234';
+            let authReqBody = JSON.stringify({username: MUsername, password: MPassword});
+            let response = await request(BASE_URL)
+                .post('/api/signup')
+                .send(authReqBody)
+            expect(response.status).toBe(201);
+
+            let updatePermissionBody = JSON.stringify({username: MUsername, permission: 'M'});
+            response = await request(BASE_URL)
+                .put('/api/permission')
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send(updatePermissionBody)
+            expect(response.status).toBe(200)
+
+            response = await request(BASE_URL)
+                .post('/api/login')
+                .send(authReqBody)
+            expect(response.status).toBe(200);
+            let MJwt = JSON.parse(response.res.text).token
+            expect(MJwt).toBeDefined()
+
+            let reqBody = 'bad_body';
+            let notExistedId = v4().substring(0,25);
+            response = await request(BASE_URL)
+                .get(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send();
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .post(`/api/product`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send();
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send();
+            expect(response.status).toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/permission`)
+                .set('Authorization', `Bearer ${MJwt}`)
+                .send(reqBody);
+            expect(response.status).toBe(403);
+        })
+
+        test('Validate permission A', async () => {
+            let reqBody = 'bad_body';
+            let notExistedId = v4().substring(0,25);
+            let response = await request(BASE_URL)
+                .get(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send();
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .post(`/api/product`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${notExistedId}`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send();
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .delete(`/api/product/${productIds[0]}`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send();
+            expect(response.status).not.toBe(403);
+
+            response = await request(BASE_URL)
+                .put(`/api/permission`)
+                .set('Authorization', `Bearer ${adminJwt}`)
+                .send(reqBody);
+            expect(response.status).not.toBe(403);
         })
     });
 

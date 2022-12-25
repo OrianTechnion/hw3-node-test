@@ -1,5 +1,5 @@
 module.exports.urls404 = {
-    GET: ['/api/signup', '/api/login', '/api/product', '/api/permission', '/api/segel'],
+    GET: ['/api/signup', '/api/login', '/api/product', '/api/permission', '/api/segel', '/'],
     POST: ['/api/permission', '/api/segel','/api/product/123'],
     PUT: ['/api/signup', '/api/login', '/api/product', '/api/segel'],
     DELETE: ['/api/signup', '/api/login', '/api/permission', '/api/segel'],
