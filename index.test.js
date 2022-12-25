@@ -80,6 +80,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             expect(response.status).toBe(400)
 
         })
+
         test('POST /api/signup - 400 - invalid json body', async () => {
             let user = v4().substring(0, 16);
             let pass = '1234'
