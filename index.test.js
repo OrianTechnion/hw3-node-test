@@ -5,7 +5,7 @@ const { getIndexedArray } = require('./utils');
 const jwt = require('jsonwebtoken');
 
 const args = process.argv.slice(2);
-const BASE_URL = (args.length === 0) ? 'http://localhost:3000' : args[0];
+const BASE_URL = (args.length === 1) ? 'http://localhost:3000' : args[1];
 const ADMIN_USERNAME = 'admin';
 const ADMIN_PASSWORD = 'admin';
 

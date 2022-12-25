@@ -9,7 +9,7 @@
     "bail": 1
   },
   "scripts": {
-    "test": "jest"
+    "test": "jest index.test.js"
   },
   "author": "Orian Shechter",
   "license": "ISC",
