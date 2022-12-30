@@ -21,7 +21,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
 
     describe('Signup & Login', function () {
         test('Base segel test', async () => {
-            let user = v4().substring(0, 8);
+            let user = v4().substring(0, 20);
             let pass = '1234'
             let reqBody = JSON.stringify({ username: user, password: pass })
 
@@ -40,7 +40,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
         })
 
         test('POST /api/signup - 400 - empty username or password', async () => {
-            let user = v4().substring(0, 16);
+            let user = v4().substring(0, 20);
             let pass = '1234'
 
             let reqBody = JSON.stringify({ password: pass })
@@ -241,7 +241,7 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
                 expect(response.status).toBe(400)
             }
 
-            const badPrices = ["5", -5, 1005, null]
+            const badPrices = ["5", -5, 1005, null, [], {}, '']
             for (const badPrice of badPrices) {
                 let productWithBadPrice = Object.assign({}, products[0], {price: badPrice})
                 const reqBody = JSON.stringify(productWithBadPrice);
@@ -251,6 +251,18 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
                     .send(reqBody)
                 expect(response.status).toBe(400)
             }
+
+            const badStocks = ["5", 5.5, null, [], {}, '']
+            for (const badStock of badStocks) {
+                let productWithBadStock = Object.assign({}, products[0], {stock: badStock});
+                const reqBody = JSON.stringify(productWithBadStock);
+                const response = await request(BASE_URL)
+                    .post('/api/product')
+                    .set('Authorization', `Bearer ${adminJwt}`)
+                    .send(reqBody)
+                expect(response.status).toBe(400)
+            }
+
 
             const badCategories = ["T-sHIrt", null, 5, "5", "    t-shirt"];
             for (const badCategory of badCategories) {
@@ -277,14 +289,18 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             expect(response.status).toBe(400)
         })
 
-        test('POST /api/product - 400 - request with id param', async () => {
-            const productWithId = Object.assign({}, products[0], {id: '123'});
+        test('POST /api/product - 201 - request with id param', async () => {
+            const newId = v4().substring(0,30)
+            const productWithId = Object.assign({}, products[0], {id: newId});
             const reqBody = JSON.stringify(productWithId);
             const response = await request(BASE_URL)
                 .post('/api/product')
                 .set('Authorization', `Bearer ${adminJwt}`)
                 .send(reqBody)
-            expect(response.status).toBe(400)
+            expect(response.status).toBe(201)
+            const productResponse = JSON.parse(response.res.text)
+            expect(Object.keys(productResponse).length).toBe(1);
+            expect(productResponse.id).not.toBe(newId);
         })
 
         test('POST /api/product - 400 - not existing category', async () => {
@@ -299,8 +315,8 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
 
         test('POST /api/product - 201', async () => {
             for (const product of products) {
-                reqBody = JSON.stringify(product);
-                response = await request(BASE_URL)
+                const reqBody = JSON.stringify(product);
+                const response = await request(BASE_URL)
                     .post('/api/product')
                     .set('Authorization', `Bearer ${adminJwt}`)
                     .send(reqBody)
@@ -312,8 +328,8 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             }
 
             for (const product of productsWithImage) {
-                reqBody = JSON.stringify(product);
-                response = await request(BASE_URL)
+                const reqBody = JSON.stringify(product);
+                const response = await request(BASE_URL)
                     .post('/api/product')
                     .set('Authorization', `Bearer ${adminJwt}`)
                     .send(reqBody)
@@ -378,14 +394,54 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             expect(responseBody).toContainEqual(products[i])
         })
 
-        test('PUT /api/product - 400 - request with id param in body', async () => {
-            const productWithId = Object.assign({}, products[0], {id: '123'});
+        test('PUT /api/product/{id} - 400 - fields violation', async () => {
+            const badPrices = ["5", -5, 1005, null, [], {}, '']
+            for (const badPrice of badPrices) {
+                let productWithBadPrice = Object.assign({}, products[0], {price: badPrice})
+                const reqBody = JSON.stringify(productWithBadPrice);
+                const response = await request(BASE_URL)
+                    .put(`/api/product/${productIds[0]}`)
+                    .set('Authorization', `Bearer ${adminJwt}`)
+                    .send(reqBody)
+                expect(response.status).toBe(400)
+            }
+
+            const badStocks = ["5", 5.5, null, [], {}, '']
+            for (const badStock of badStocks) {
+                let productWithBadStock = Object.assign({}, products[0], {stock: badStock});
+                const reqBody = JSON.stringify(productWithBadStock);
+                const response = await request(BASE_URL)
+                    .put(`/api/product/${productIds[0]}`)
+                    .set('Authorization', `Bearer ${adminJwt}`)
+                    .send(reqBody)
+                expect(response.status).toBe(400)
+            }
+
+
+            const badCategories = ["T-sHIrt", null, 5, "5", "    t-shirt"];
+            for (const badCategory of badCategories) {
+                let productWithBadCategory = Object.assign({}, products[0], {category: badCategory})
+                const reqBody = JSON.stringify(productWithBadCategory);
+                const response = await request(BASE_URL)
+                    .put(`/api/product/${productIds[0]}`)
+                    .set('Authorization', `Bearer ${adminJwt}`)
+                    .send(reqBody)
+                expect(response.status).toBe(400)
+            }
+        })
+
+        test('PUT /api/product - 200 - request with id param in body', async () => {
+            const newId = v4().substring(0,30);
+            const productWithId = Object.assign({}, products[0], {id: newId});
             const reqBody = JSON.stringify(productWithId);
             const response = await request(BASE_URL)
-                .put(`/api/product/${productWithId.id}`)
+                .put(`/api/product/${productIds[0]}`)
                 .set('Authorization', `Bearer ${adminJwt}`)
                 .send(reqBody)
-            expect(response.status).toBe(400)
+            expect(response.status).toBe(200)
+            const productResponse = JSON.parse(response.res.text)
+            expect(Object.keys(productResponse).length).toBe(1);
+            expect(productResponse.id).not.toBe(newId);
         })
 
         // https://moodle2223.technion.ac.il/mod/forum/discuss.php?d=11954#p15516
@@ -786,7 +842,6 @@ describe(`HW3 Tests, base url: <${BASE_URL}> `, () => {
             const defaultSecret = 'your_secret_key'
             await expect(async () => {jwt.verify(token, defaultSecret)}).rejects.toThrow();
             await expect(async () => {jwt.verify(token, '')}).rejects.toThrow();
-
         })
 
     })
